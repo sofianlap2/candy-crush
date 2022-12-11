@@ -64,7 +64,7 @@ function dragDrop() {
     otherCandy = this
 }
 function dragEnd() {
-    if(currentCandy.src.includes('blank') || otherCandy.src.includes('blank')) return
+    if(currentCandy.src.includes('blank') || otherCandy.src.includes('blank') || turnLeft == 0) return
     let currCoords = currentCandy.id.split('-')
     let r1 = parseInt(currCoords[0])
     let c1 = parseInt(currCoords[1])
