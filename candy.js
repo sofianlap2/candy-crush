@@ -1,10 +1,13 @@
-const cols = 9
 const rows = 9
+const cols = 9
+let board = []
+
+let turnLeft = 20
+
+const colors = ['Blue', 'Green', 'Orange', 'Purple', 'Red', 'Yellow']
 let score = 0
 
-let candies = ['Blue', 'Green', 'Orange', 'Purple', 'Red', 'Yellow']
-let board = []
-let selectedCandy = null
+let currentCandy = null
 let otherCandy = null
 
 window.onload = function() {
@@ -18,38 +21,35 @@ window.onload = function() {
 }
 
 function randomCandy() {
-    return candies[Math.floor(Math.random() * candies.length)]
+    return colors[Math.floor(Math.random() * colors.length)]
 }
 
 function startGame() {
     for(let r = 0; r < rows; r++) {
         let row = []
         for(let c = 0; c < cols; c++) {
+            let currImg = randomCandy()
 
-            const candy = document.createElement('img')
-            candy.src = './images/' + randomCandy() + '.png'
-            candy.id = r.toString() + '-' + c.toString()
+            const tile = document.createElement('img')
+            tile.id = r.toString() + '-' + c.toString()
+            tile.src = './images/' + currImg + '.png'
 
-            //DRAG FUNCTIONALITY
-            candy.addEventListener("dragstart", dragStart); //click on a candy, initialize drag process
-            candy.addEventListener("dragover", dragOver);  //clicking on candy, moving mouse to drag the candy
-            candy.addEventListener("dragenter", dragEnter); //dragging candy onto another candy
-            candy.addEventListener("dragleave", dragLeave); //leave candy over another candy
-            candy.addEventListener("drop", dragDrop); //dropping a candy over another candy
-            candy.addEventListener("dragend", dragEnd); //after drag process completed, we swap candies
+            tile.addEventListener('dragstart', dragStart)
+            tile.addEventListener('dragenter', dragEnter)
+            tile.addEventListener('dragleave', dragLeave)
+            tile.addEventListener('dragover', dragOver)
+            tile.addEventListener('drop', dragDrop)
+            tile.addEventListener('dragend', dragEnd)
 
-            row.push(candy)
-            document.getElementById('board').appendChild(candy)
+            row.push(tile)
+            document.getElementById('board').append(tile)
         }
         board.push(row)
     }
 }
 
 function dragStart() {
-    selectedCandy = this
-}
-function dragOver(e) {
-    e.preventDefault()
+    currentCandy = this
 }
 function dragEnter(e) {
     e.preventDefault()
@@ -57,12 +57,15 @@ function dragEnter(e) {
 function dragLeave(e) {
     e.preventDefault()
 }
+function dragOver(e) {
+    e.preventDefault()
+}
 function dragDrop() {
     otherCandy = this
 }
 function dragEnd() {
-    if(selectedCandy.src.includes('blank') || otherCandy.src.includes('blank')) return
-    let currCoords = selectedCandy.id.split('-')
+    if(currentCandy.src.includes('blank') || otherCandy.src.includes('blank')) return
+    let currCoords = currentCandy.id.split('-')
     let r1 = parseInt(currCoords[0])
     let c1 = parseInt(currCoords[1])
 
@@ -70,63 +73,27 @@ function dragEnd() {
     let r2 = parseInt(otherCoords[0])
     let c2 = parseInt(otherCoords[1])
 
-    const isLeft = c2 == c1 - 1 && r1 == r2
-    const isRight = c2 == c1 + 1 && r1 == r2
-    const isUp = r2 == r1 - 1 && c1 == c2
-    const isDown = r2 == r1 + 1 && c1 == c2
+    let isLeft = c2 == c1 - 1 && r1 == r2
+    let isRight = c2 == c1 + 1 && r1 == r2
+    let isUp = r2 == r1 - 1 && c1 == c2
+    let idDown = r2 == r1 + 1 && c1 == c2
 
-    const isAdjacent = isLeft || isRight || isUp || isDown
+    let isAdjacent = isLeft || isRight || isUp || idDown
 
     if(isAdjacent) {
-        let currImg = selectedCandy.src
+        let currImg = currentCandy.src
         let otherImg = otherCandy.src
+        currentCandy.src = otherImg
         otherCandy.src = currImg
-        selectedCandy.src = otherImg
 
         if(!checkValid()) {
-            let currImg = selectedCandy.src
+            let currImg = currentCandy.src
             let otherImg = otherCandy.src
+            currentCandy.src = otherImg
             otherCandy.src = currImg
-            selectedCandy.src = otherImg
-        }
-    }
-}
-
-function crushCandy() {
-    crushThree()
-    document.getElementById('score').innerText = score
-}
-
-function crushThree() {
-    for(let r = 0; r < rows; r++) {
-        for(let c = 0; c < cols - 2; c++) {
-            let curr = board[r][c].src
-            let next = board[r][c+1].src
-            let last = board[r][c+2].src
-
-
-            if(curr == next && next == last && !board[r][c].src.includes("blank")) {
-                board[r][c].src = "./images/blank.png";
-                board[r][c+1].src = "./images/blank.png";
-                board[r][c+2].src = "./images/blank.png";
-                score += 30
-            }
-        }
-    }
-
-    for(let c = 0; c < cols; c++) {
-        for(let r = 0; r < rows - 2; r++) {
-            let curr = board[r][c].src
-            let next = board[r+1][c].src
-            let last = board[r+2][c].src
-
-
-            if(curr == next && next == last && !board[r][c].src.includes("blank")) {
-                board[r][c].src = "./images/blank.png";
-                board[r+1][c].src = "./images/blank.png";
-                board[r+2][c].src = "./images/blank.png";
-                score += 30
-            }
+        } else {
+            turnLeft--
+            document.getElementById('turn').innerText = turnLeft
         }
     }
 }
@@ -134,12 +101,7 @@ function crushThree() {
 function checkValid() {
     for(let r = 0; r < rows; r++) {
         for(let c = 0; c < cols - 2; c++) {
-            let curr = board[r][c].src
-            let next = board[r][c+1].src
-            let last = board[r][c+2].src
-
-
-            if(curr == next && next == last && !board[r][c].src.includes("blank")) {
+            if(board[r][c].src == board[r][c+1].src && board[r][c+1].src == board[r][c+2].src && !board[r][c].src.includes('blank')) {
                 return true
             }
         }
@@ -147,12 +109,7 @@ function checkValid() {
 
     for(let c = 0; c < cols; c++) {
         for(let r = 0; r < rows - 2; r++) {
-            let curr = board[r][c].src
-            let next = board[r+1][c].src
-            let last = board[r+2][c].src
-
-
-            if(curr == next && next == last && !board[r][c].src.includes("blank")) {
+            if(board[r][c].src == board[r+1][c].src && board[r+1][c].src == board[r+2][c].src && !board[r][c].src.includes('blank')) {
                 return true
             }
         }
@@ -160,10 +117,96 @@ function checkValid() {
     return false
 }
 
+function crushCandy() {
+    crushFive()
+    crushFour()
+    crushThree()
+    document.getElementById('score').innerText = score
+}
+
+function crushThree() {
+    for(let r = 0; r < rows; r++) {
+        for(let c = 0; c < cols - 2; c++) {
+            if(board[r][c].src == board[r][c+1].src && board[r][c+1].src == board[r][c+2].src && !board[r][c].src.includes('blank')) {
+                board[r][c].src = './images/blank.png'
+                board[r][c+1].src = './images/blank.png'
+                board[r][c+2].src = './images/blank.png'
+                score += 30
+            }
+        }
+    }
+
+    for(let c = 0; c < cols; c++) {
+        for(let r = 0; r < rows - 2; r++) {
+            if(board[r][c].src == board[r+1][c].src && board[r+1][c].src == board[r+2][c].src && !board[r][c].src.includes('blank')) {
+                board[r][c].src = './images/blank.png'
+                board[r+1][c].src = './images/blank.png'
+                board[r+2][c].src = './images/blank.png'
+                score += 30
+            }
+        }
+    }
+
+}
+
+function crushFour() {
+    for(let r = 0; r < rows; r++) {
+        for(let c = 0; c < cols - 3; c++) {
+            if(board[r][c].src == board[r][c+1].src && board[r][c+1].src == board[r][c+2].src && board[r][c+2].src == board[r][c+3].src && !board[r][c].src.includes('blank')) {
+                board[r][c].src = './images/blank.png'
+                board[r][c+1].src = './images/blank.png'
+                board[r][c+2].src = './images/blank.png'
+                board[r][c+3].src = './images/blank.png'
+                score += 40
+            }
+        }
+    }
+
+    for(let c = 0; c < cols; c++) {
+        for(let r = 0; r < rows - 3; r++) {
+            if(board[r][c].src == board[r+1][c].src && board[r+1][c].src == board[r+2][c].src && board[r+2][c].src == board[r+3][c].src && !board[r][c].src.includes('blank')) {
+                board[r][c].src = './images/blank.png'
+                board[r+1][c].src = './images/blank.png'
+                board[r+2][c].src = './images/blank.png'
+                board[r+3][c].src = './images/blank.png'
+                score += 40
+            }
+        }
+    }
+}
+
+function crushFive() {
+    for(let r = 0; r < rows; r++) {
+        for(let c = 0; c < cols - 4; c++) {
+            if(board[r][c].src == board[r][c+1].src && board[r][c+1].src == board[r][c+2].src && board[r][c+2].src == board[r][c+3].src && board[r][c+3].src == board[r][c+4].src && !board[r][c].src.includes('blank')) {
+                board[r][c].src = './images/blank.png'
+                board[r][c+1].src = './images/blank.png'
+                board[r][c+2].src = './images/blank.png'
+                board[r][c+3].src = './images/blank.png'
+                board[r][c+4].src = './images/blank.png'
+                score += 50
+            }
+        }
+    }
+
+    for(let c = 0; c < cols; c++) {
+        for(let r = 0; r < rows - 4; r++) {
+            if(board[r][c].src == board[r+1][c].src && board[r+1][c].src == board[r+2][c].src && board[r+2][c].src == board[r+3][c].src && board[r][c+3].src == board[r][c+4].src && !board[r][c].src.includes('blank')) {
+                board[r][c].src = './images/blank.png'
+                board[r+1][c].src = './images/blank.png'
+                board[r+2][c].src = './images/blank.png'
+                board[r+3][c].src = './images/blank.png'
+                board[r+4][c].src = './images/blank.png'
+                score += 50
+            }
+        }
+    }
+}
+
 function slideCandy() {
     for(let c = 0; c < cols; c++) {
         let ind = rows - 1
-        for(let r = cols - 1; r >= 0; r--) {
+        for(let r = rows - 1; r >= 0; r--) {
             if(!board[r][c].src.includes('blank')) {
                 board[ind][c].src = board[r][c].src
                 ind--
@@ -171,7 +214,7 @@ function slideCandy() {
         }
 
         for(let r = ind; r >= 0; r--) {
-            board[r][c].src = "./images/blank.png";
+            board[r][c].src = './images/blank.png'
         }
     }
 }
