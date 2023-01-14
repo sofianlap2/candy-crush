@@ -1,4 +1,8 @@
 # candy-crush
+
+Demo of the game https://sofianlap2.github.io/candy-crush/
+
+
 Specs:
 This candy crush game consist to score more points. you win point if you hit same three adjacent candys by moving a candy to its adjacent candy.
 when the three candy match they dissapear and new ones appears and you get score +30 each 3 candys match.
